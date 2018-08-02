@@ -66,7 +66,7 @@ public:
       SQL.SetProvider("SQL/" + dbid);
   }
 
-  void LogMessage(User* user, Channel* channel, const std::string &text, const std::string &event)
+  void LogMessage(User* user, std::string &channel, const std::string &text, const std::string &event)
   {
       if (!SQL)
       {
@@ -82,7 +82,7 @@ public:
           SQL->PopulateUserInfo(user, queryInfo);
           queryInfo["nick"] = user->nick;
           queryInfo["host"] = user->host;
-          queryInfo["channel"] = channel->name;
+          queryInfo["channel"] = channel;
           queryInfo["event"] = event;
           queryInfo["message"] = text;
           SQL->submit(new MessageLogQuery(this), "INSERT INTO events (nick, host, ip, user_name, ident, server, channel, event, message) VALUES ('$nick', '$host', '$ip', '$gecos', '$ident', '$server', '$channel', '$event', '$message')", queryInfo);
@@ -91,7 +91,7 @@ public:
 
   ModResult OnPreTopicChange(User* user, Channel* channel, const std::string &text)
   {
-      LogMessage(user, channel, text, std::string("topic"));
+      LogMessage(user, channel->name, text, std::string("topic"));
       return MOD_RES_PASSTHRU;
   }
 
@@ -99,7 +99,11 @@ public:
   {
       if (target_type == TYPE_CHANNEL) {
           Channel* channel = (Channel*) dest;
-          LogMessage(user, channel, text, std::string("message"));
+          LogMessage(user, channel->name, text, std::string("message"));
+      }
+      else if (target_type == TYPE_USER) {
+          User* u2 = (User*) dest;
+          LogMessage(user, u2->nick, text, std::string("privmsg"));
       }
       return MOD_RES_PASSTHRU;
   }
@@ -108,19 +112,19 @@ public:
   {
       if (target_type == TYPE_CHANNEL) {
           Channel* channel = (Channel*) dest;
-          LogMessage(user, channel, text, std::string("notice"));
+          LogMessage(user, channel->name, text, std::string("notice"));
       }
       return MOD_RES_PASSTHRU;
   }
 
   void OnUserJoin(Membership* memb, bool sync, bool created, CUList& excepts)
   {
-      LogMessage(memb->user, memb->chan, std::string(), std::string("join"));
+      LogMessage(memb->user, memb->chan->name, std::string(), std::string("join"));
   }
 
   void OnUserPart(Membership* memb, std::string &partmessage, CUList& except_list)
   {
-      LogMessage(memb->user, memb->chan, partmessage, std::string("part"));
+      LogMessage(memb->user, memb->chan->name, partmessage, std::string("part"));
   }
 
   Version GetVersion()
