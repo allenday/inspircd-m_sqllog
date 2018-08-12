@@ -9,6 +9,6 @@ CREATE TABLE events (
     ident character varying(255),
     server character varying(255),
     channel character varying(255),
-    message text,
+    message text CHARACTER SET utf8mb4,
     key(created_at)
 );
