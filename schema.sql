@@ -1,3 +1,4 @@
+ALTER DATABASE XXXXX CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci;
 CREATE TABLE events (
     id bigint not null primary key auto_increment,
     created_at timestamp DEFAULT now(),
